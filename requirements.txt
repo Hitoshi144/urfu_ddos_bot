@@ -1,0 +1,9 @@
+aiogram
+asyncio
+dotenv
+aiohttp
+json
+sqlalchemy
+datetime
+zoneinfo
+pandas
