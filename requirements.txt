@@ -8,3 +8,4 @@ pandas
 asyncpg
 openpyxl
 flask
+requests
