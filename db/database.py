@@ -15,7 +15,7 @@ load_dotenv()
 
 DATABASE_URL = (
     f"postgresql+asyncpg://{getenv('DB_USER')}:{getenv('DB_PASSWORD')}"
-    f"@{getenv('DB_HOST')}:{getenv('DB_PORT')}/{getenv('DB_NAME')}"
+    f"@{getenv('DB_HOST')}/{getenv('DB_NAME')}"
 )
 
 CODES = [
