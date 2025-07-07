@@ -4,5 +4,4 @@ dotenv
 aiohttp
 sqlalchemy
 datetime
-zoneinfo
 pandas
