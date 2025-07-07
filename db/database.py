@@ -21,6 +21,7 @@ if not db_url:
         f"@{getenv('DB_HOST')}:{getenv('DB_PORT')}/{getenv('DB_NAME')}"
     )
 else:
+    print(f'Using URL: {db_url}')
     DATABASE_URL = db_url
 
 CODES = [
