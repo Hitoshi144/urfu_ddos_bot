@@ -179,9 +179,9 @@ async def need_db_update():
     async with SessionLocal() as session:
         try:
             latest_date = await get_date(session)
-            tz = timezone(timedelta(hours=5))
+            #tz = timezone(timedelta(hours=5))
     
-            latest_date = latest_date.replace(tzinfo=timezone.utc).astimezone(tz) # type: ignore
+            #latest_date = latest_date.replace(tzinfo=timezone.utc).astimezone(tz) # type: ignore
     
             current_date = datetime.now()
     
