@@ -13,10 +13,15 @@ from data_fetching import first_fetch, fetch_data
 
 load_dotenv()
 
-DATABASE_URL = (
-    f"postgresql+asyncpg://{getenv('DB_USER')}:{getenv('DB_PASSWORD')}"
-    f"@{getenv('DB_HOST')}/{getenv('DB_NAME')}"
-)
+db_url = getenv("DB_URL")
+
+if not db_url:
+    DATABASE_URL = (
+        f"postgresql+asyncpg://{getenv('DB_USER')}:{getenv('DB_PASSWORD')}"
+        f"@{getenv('DB_HOST')}:{getenv('DB_PORT')}/{getenv('DB_NAME')}"
+    )
+else:
+    DATABASE_URL = db_url
 
 CODES = [
     '37.05.01',
