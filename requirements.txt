@@ -5,3 +5,4 @@ aiohttp
 sqlalchemy
 datetime
 pandas
+asyncpg
