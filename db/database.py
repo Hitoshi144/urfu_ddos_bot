@@ -6,6 +6,8 @@ from sqlalchemy import Integer, String, text, DateTime, func, delete, select, as
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
+import pandas as pd
+import os
 
 from data_fetching import first_fetch, fetch_data
 
@@ -186,3 +188,26 @@ async def need_db_update():
                 return False
         except Exception as e:
             return True
+        
+async def save_to_xlsx(id: int):
+    async with SessionLocal() as session:
+        result = await get(session, id)
+
+        if not os.path.exists('temp'):
+            os.mkdir('temp')
+
+        file_path = rf"temp/{CODES[id - 1]}.xlsx"
+
+        data = [{
+            "Регистрационный номер": user.regnum,
+            "Направление": user.speciality,
+            "Основа": user.compensation,
+            "Приоритет": user.priority,
+            "Оценки": user.marks,
+            "Итоговая оценка": user.total_mark
+        } for user in result]
+
+        df = pd.DataFrame(data)
+        df.to_excel(file_path, index=False, engine='openpyxl')
+
+        return file_path

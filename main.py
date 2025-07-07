@@ -3,7 +3,7 @@ from os import getenv
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters.command import Command
 from aiogram.utils.chat_action import ChatActionSender
 from aiogram.enums import  ParseMode
@@ -11,7 +11,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 
 from keyboards import main_kb
-from db.database import init_db, print_tables, create, delete_all, get, get_date, SessionLocal, load_all_data, need_db_update
+from db.database import init_db, print_tables, create, delete_all, get, get_date, SessionLocal, load_all_data, need_db_update, save_to_xlsx
 from helper import get_marks, SUBJECTS
 
 load_dotenv()
@@ -138,7 +138,42 @@ async def show_main_menu(callback: CallbackQuery):
 
 @dp.callback_query(F.data.startswith('table_'))
 async def get_table(callback: CallbackQuery):
-    await callback.answer('Данная функция в разработке\n.･ﾟﾟ･(／ω＼)･ﾟﾟ･.', show_alert=True)
+     async with SessionLocal() as session:
+        need_update = await need_db_update()
+
+        if need_update:
+            async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+                await init_db()
+                await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
+                await load_all_data(session)
+
+        program_id = callback.data.split('_')[1]
+
+        async with ChatActionSender.upload_document(bot=callback.message.bot, chat_id=callback.message.chat.id):
+            file_path = await save_to_xlsx(int(program_id))
+    
+            file = FSInputFile(file_path)
+        
+            await callback.message.delete()
+            await callback.message.answer_document(file, caption='Вот твоя табличка~ 📊💖')
+    
+            action_kb = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text='На главную 🌸',
+                        callback_data='main_menu'
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text='Узнать место в списке 📋',
+                        callback_data=f'subject_{program_id}'
+                    )
+                ]
+            ])
+    
+            await callback.message.answer('Что будем делать дальше? (っ╹ᆺ╹)っ', reply_markup=action_kb)
+
 
 @dp.message(Command("test_row"))
 async def create_test_row(message: Message):
