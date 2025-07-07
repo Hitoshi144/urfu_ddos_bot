@@ -13,6 +13,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from keyboards import main_kb
 from db.database import init_db, print_tables, create, delete_all, get, get_date, SessionLocal, load_all_data, need_db_update, save_to_xlsx
 from helper import get_marks, SUBJECTS
+from background import keep_alive
 
 load_dotenv()
 TOKEN = getenv("TOKEN")
@@ -227,5 +228,6 @@ async def main():
     await init_db()
     await dp.start_polling(bot)
 
+keep_alive()
 if __name__ == "__main__":
     asyncio.run(main())
