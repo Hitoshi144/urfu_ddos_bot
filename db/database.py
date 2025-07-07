@@ -21,7 +21,7 @@ if not db_url:
         f"@{getenv('DB_HOST')}:{getenv('DB_PORT')}/{getenv('DB_NAME')}"
     )
 else:
-    DATABASE_URL = db_url
+    DATABASE_URL = db_url[:10] + "+asyncpg" + db_url[11:]
 
 CODES = [
     '37.05.01',
