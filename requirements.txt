@@ -6,3 +6,4 @@ sqlalchemy
 datetime
 pandas
 asyncpg
+psycopg2
