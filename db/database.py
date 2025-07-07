@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 from os import getenv
 from dotenv import load_dotenv
-from sqlalchemy import Integer, String, text, DateTime, func, delete, select
+from sqlalchemy import Integer, String, text, DateTime, func, delete, select, asc, desc
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
@@ -78,6 +78,7 @@ async def get(session: AsyncSession, id: int):
             stmt = "Программа не найдена"
     
     if stmt != "Программа не найдена":
+        stmt = stmt.order_by(asc(User.priority), desc(User.total_mark))
         result = await session.execute(stmt)
         return result.scalars().all()
     else:
@@ -168,17 +169,20 @@ async def load_all_data(session: AsyncSession):
 
 async def need_db_update():
     async with SessionLocal() as session:
-        latest_date = await get_date(session)
-        tz = timezone(timedelta(hours=5))
-
-        latest_date = latest_date.replace(tzinfo=timezone.utc).astimezone(tz) # type: ignore
-
-        current_date = datetime.now()
-
-        print(latest_date)
-        print(current_date)
-
-        if latest_date.day - current_date.day != 0 or latest_date.hour - current_date.hour != 0: # type: ignore
+        try:
+            latest_date = await get_date(session)
+            tz = timezone(timedelta(hours=5))
+    
+            latest_date = latest_date.replace(tzinfo=timezone.utc).astimezone(tz) # type: ignore
+    
+            current_date = datetime.now()
+    
+            print(latest_date)
+            print(current_date)
+    
+            if latest_date.day - current_date.day != 0 or latest_date.hour - current_date.hour != 0: # type: ignore
+                return True
+            else:
+                return False
+        except Exception as e:
             return True
-        else:
-            return False

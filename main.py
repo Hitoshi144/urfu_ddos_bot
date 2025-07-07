@@ -5,9 +5,14 @@ from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters.command import Command
+from aiogram.utils.chat_action import ChatActionSender
+from aiogram.enums import  ParseMode
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 
 from keyboards import main_kb
 from db.database import init_db, print_tables, create, delete_all, get, get_date, SessionLocal, load_all_data, need_db_update
+from helper import get_marks, SUBJECTS
 
 load_dotenv()
 TOKEN = getenv("TOKEN")
@@ -28,15 +33,112 @@ async def start(message: Message):
 
 Не волнуйся, всё будет хорошо, я всегда рядом! 🍀''', 
 reply_markup=main_kb)
+    await message.delete()
+    
+@dp.callback_query(F.data.startswith("select-action_"))
+async def action_selecting(callback: CallbackQuery):
+    program_id = callback.data.split('_')[1] # type: ignore
+
+    action_kb = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(
+            text='Узнать место в списке 📋',
+            callback_data=f'subject_{program_id}'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='Скачать полную таблицу 💻',
+            callback_data=f'table_{program_id}'
+        )
+    ]
+])
+
+    await callback.message.edit_text(f'''<b>{SUBJECTS[program_id]}</b>
+Выбери, что будем делать дальше, Катюша-тяян~! 💕
+
+Хочешь узнать своё заветное местечко в списке абитуриентов? 📋✨
+Или, может быть, хочешь скачать всю волшебную табличку целиком, чтобы изучить её в уютной обстановке? 💻☕
+
+🌟 Просто нажми на кнопочку, а остальное я сделаю за тебя, как настоящая заботливая помощница~! (≧◡≦) ♡
+''', parse_mode=ParseMode.HTML, reply_markup=action_kb) 
     
 @dp.callback_query(F.data.startswith("subject_"))
 async def on_subject_select(callback: CallbackQuery):
     program_id = callback.data.split('_')[1] # type: ignore
 
     async with SessionLocal() as session:
-        result = await get(session, int(program_id))
-        await callback.message.answer(f'{len(result)}') # type: ignore
+        need_update = await need_db_update()
 
+        if need_update:
+            async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+                await init_db()
+                await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
+                await load_all_data(session)
+
+        async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+            await callback.message.edit_text('Шуршу байтами... ( = ⩊ = )') # type: ignore
+            result = await get(session, int(program_id)) # type: ignore
+            count = 0
+            katya = False
+            for user in result:
+                count += 1
+                if user.regnum == 3766402: # type: ignore
+                    katya = user
+                    break
+            
+            if katya:
+                std_message = f'''Вот что мне удалось найти для тебя, Катюша-тяян~! 💖📊
+
+<b>{SUBJECTS[program_id]}</b>
+                
+🪄 Твоё место в списке: {count}
+👥 Всего участников в списке: {len(result)}
+'''
+
+                marks = get_marks(katya.marks) # type: ignore
+
+                if marks != []:
+                    std_message += '''\n📚 Оценки по предметам:\n'''
+                    for mark in marks:
+                        std_message += f"* {mark}\n"
+                    std_message += f"\n💯 Общий балл: {katya.total_mark}" # type: ignore
+                else:
+                    std_message += "\nУвы, оценочек пока нету (╥﹏╥)"
+                
+                std_message += f'''\n\nТы молодчинка! Я горжусь тобой~ (๑˃ᴗ˂)ﻭ
+Если нужно, я могу всё повторить или показать тебе что-то ещё~! 💌✨'''
+                
+            end_kb = InlineKeyboardMarkup(inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text='На главную 🌸',
+                        callback_data='main_menu'
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text='Скачать полную таблицу 💻',
+                        callback_data=f'table_{program_id}'
+                    )
+                ]
+            ])
+
+
+            await callback.message.edit_text(std_message, reply_markup=end_kb, parse_mode=ParseMode.HTML) # type: ignore
+
+
+@dp.callback_query(F.data == 'main_menu')
+async def show_main_menu(callback: CallbackQuery):
+    await callback.message.edit_text('''Я снова с тобой, Катюша-тяян~! 💞
+
+Готова помочь тебе с конкурсными списками, как и раньше~! 📝✨
+Выбери образовательную программу, и я всё покажу~ 💻📊
+''', reply_markup=main_kb)
+
+@dp.callback_query(F.data.startswith('table_'))
+async def get_table(callback: CallbackQuery):
+    await callback.answer('Данная функция в разработке\n.･ﾟﾟ･(／ω＼)･ﾟﾟ･.', show_alert=True)
 
 @dp.message(Command("test_row"))
 async def create_test_row(message: Message):
