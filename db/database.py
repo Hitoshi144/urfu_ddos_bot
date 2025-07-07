@@ -21,7 +21,6 @@ if not db_url:
         f"@{getenv('DB_HOST')}:{getenv('DB_PORT')}/{getenv('DB_NAME')}"
     )
 else:
-    print(f'Using URL: {db_url}')
     DATABASE_URL = db_url
 
 CODES = [
@@ -31,6 +30,7 @@ CODES = [
     '05.03.06'
 ]
 
+print(f'Using URL: {DATABASE_URL}')
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
