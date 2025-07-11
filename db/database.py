@@ -43,10 +43,10 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     regnum: Mapped[int] = mapped_column(Integer)
-    speciality: Mapped[str] = mapped_column(String(100))
-    compensation: Mapped[str] = mapped_column(String(100))
+    speciality: Mapped[str] = mapped_column(String(200))
+    compensation: Mapped[str] = mapped_column(String(200))
     priority: Mapped[int] = mapped_column(Integer)
-    marks: Mapped[str] = mapped_column(String(100))
+    marks: Mapped[str] = mapped_column(String(200))
     total_mark: Mapped[int] = mapped_column(Integer)
     date: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
