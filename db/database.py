@@ -133,8 +133,10 @@ async def load_all_data(session: AsyncSession):
             
             all_pages_items = await asyncio.gather(*tasks)
 
-            db_tasks = [process_items(session, items) for items in all_pages_items if items != "Error"]
-            await asyncio.gather(*db_tasks)
+            for items in all_pages_items:
+                if items == "Error":
+                    continue
+                await process_items(session, items)
 
 
     else:
