@@ -24,6 +24,30 @@ main_kb = InlineKeyboardMarkup(inline_keyboard=[
             text='05.03.06\nЭкология и природопользование',
             callback_data='select-action_4'
         )
+    ],
+    [
+        InlineKeyboardButton(
+            text='37.05.02\nПсихология служебной деятельности',
+            callback_data='select-action_5'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='43.03.01\nСервис (УГИ)',
+            callback_data='select-action_6'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='43.03.01\nСервис (Спортик)',
+            callback_data='select-action_7'
+        )
+    ],
+    [
+        InlineKeyboardButton(
+            text='Изменить регистрационный номер',
+            callback_data='change-regid'
+        )
     ]
 ])
 

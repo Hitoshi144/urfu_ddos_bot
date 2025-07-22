@@ -27,7 +27,9 @@ CODES = [
     '37.05.01',
     '38.03.02',
     '38.03.01',
-    '05.03.06'
+    '05.03.06',
+    '37.05.02',
+    '43.03.01'
 ]
 
 print(f'Using URL: {DATABASE_URL}')
@@ -44,6 +46,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     regnum: Mapped[int] = mapped_column(Integer)
     speciality: Mapped[str] = mapped_column(String(200))
+    institute: Mapped[str] = mapped_column(String(1000))
     compensation: Mapped[str] = mapped_column(String(200))
     priority: Mapped[int] = mapped_column(Integer)
     marks: Mapped[str] = mapped_column(String(200))
@@ -82,6 +85,12 @@ async def get(session: AsyncSession, id: int):
             stmt = select(User).where(User.speciality == "38.03.01 Экономика")
         case 4:
             stmt = select(User).where(User.speciality == "05.03.06 Экология и природопользование")
+        case 5:
+            stmt = select(User).where(User.speciality == "37.05.02 Психология служебной деятельности")
+        case 6:
+            stmt = select(User).where(User.speciality == "43.03.01 Сервис").where(User.institute == "УГИ")
+        case 7:
+            stmt = select(User).where(User.speciality == "43.03.01 Сервис").where(User.institute == "ИФКСиМП")
         case _:
             stmt = "Программа не найдена"
     
@@ -128,6 +137,7 @@ async def load_all_data(session: AsyncSession):
                             session,
                             regnum=huesos["regnum"],
                             speciality=subject["speciality"],
+                            institute=subject["institute"],
                             compensation=subject["compensation"],
                             priority=subject["priority"],
                             marks=str_marks,
@@ -164,6 +174,7 @@ async def load_all_data(session: AsyncSession):
                                 session,
                                 regnum=huesos["regnum"],
                                 speciality=subject["speciality"],
+                                institute=subject["institute"],
                                 compensation=subject["compensation"],
                                 priority=subject["priority"],
                                 marks=str_marks,
