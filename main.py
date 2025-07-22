@@ -293,6 +293,19 @@ async def get_table(callback: CallbackQuery):
     
             await callback.message.answer('Что будем делать дальше? (っ╹ᆺ╹)っ', reply_markup=action_kb)
 
+@dp.callback_query(F.data == 'update_db')
+async def update_database(callback: CallbackQuery):
+    async with SessionLocal() as session:
+        async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+                    await init_db()
+                    await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
+                    await load_all_data(session)
+    regid = get_regid(callback.message.chat.id)
+    
+    await callback.message.edit_text(f'''Ура~! База данных успешно обновлена! ✨(≧◡≦)
+Лишний раз напомню регистрационный номер: <b>{regid}</b>                                     
+
+А что будем делать дальше? ♪ (｡•̀ᴗ-)✧''', reply_markup=main_kb, parse_mode=ParseMode.HTML)
 
 @dp.message(Command("test_row"))
 async def create_test_row(message: Message):

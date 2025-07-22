@@ -36,8 +36,6 @@ CODES = [
 BATCH_SIZE = 100
 semaphore = asyncio.Semaphore(100)
 
-db_semaphore = asyncio.Semaphore(10)
-
 print(f'Using URL: {DATABASE_URL}')
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
@@ -125,7 +123,7 @@ async def load_all_data(session: AsyncSession):
         async with SessionLocal() as session:
             await delete_all(session)
 
-            await process_items(items)
+            await process_items(session, items)
             
             pages_total = (count + BATCH_SIZE - 1) // BATCH_SIZE
             remaining_pages = range(2, pages_total + 1)
@@ -135,7 +133,7 @@ async def load_all_data(session: AsyncSession):
             
             all_pages_items = await asyncio.gather(*tasks)
 
-            db_tasks = [process_items(items) for items in all_pages_items if items != "Error"]
+            db_tasks = [process_items(session, items) for items in all_pages_items if items != "Error"]
             await asyncio.gather(*db_tasks)
 
 
@@ -146,33 +144,31 @@ async def limited_fetch(page, size):
     async with semaphore:
         return await fetch_data(page, size)
     
-async def process_items(items: list[dict]):
-    async with db_semaphore:
-        async with SessionLocal() as session:
-            for huesos in items:
-                if not isinstance(huesos, dict):
-                    print(f"⚠ Unexpected entry: {huesos}")
-                    continue
-                subjects = huesos.get("applications", [])
-            
-                for subject in subjects:
-                    if subject["speciality"].split()[0] in CODES:
-                        marks = subject["marks"]
-                        str_marks = ''
-            
-                        for key, mark in marks.items():
-                            str_marks += f'{key} {mark["mark"]} '
-            
-                        await create(
-                            session,
-                            regnum=huesos["regnum"],
-                            speciality=subject["speciality"],
-                            institute=subject["institute"],
-                            compensation=subject["compensation"],
-                            priority=subject["priority"],
-                            marks=str_marks,
-                            total_mark=subject["total_mark"]
-                        )
+async def process_items(session: AsyncSession, items: list[dict]):
+    for huesos in items:
+        if not isinstance(huesos, dict):
+            print(f"⚠ Unexpected entry: {huesos}")
+            continue
+        subjects = huesos.get("applications", [])
+    
+        for subject in subjects:
+            if subject["speciality"].split()[0] in CODES:
+                marks = subject["marks"]
+                str_marks = ''
+    
+                for key, mark in marks.items():
+                    str_marks += f'{key} {mark["mark"]} '
+    
+                await create(
+                    session,
+                    regnum=huesos["regnum"],
+                    speciality=subject["speciality"],
+                    institute=subject["institute"],
+                    compensation=subject["compensation"],
+                    priority=subject["priority"],
+                    marks=str_marks,
+                    total_mark=subject["total_mark"]
+                )
 
 async def need_db_update():
     async with SessionLocal() as session:

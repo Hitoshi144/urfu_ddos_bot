@@ -47,6 +47,10 @@ main_kb = InlineKeyboardMarkup(inline_keyboard=[
         InlineKeyboardButton(
             text='Изменить регистрационный номер',
             callback_data='change-regid'
+        ),
+        InlineKeyboardButton(
+            text='Обновить базу данных',
+            callback_data='update_db'
         )
     ]
 ])
