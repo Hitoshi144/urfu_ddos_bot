@@ -36,6 +36,8 @@ CODES = [
 BATCH_SIZE = 100
 semaphore = asyncio.Semaphore(100)
 
+DB_BATCH_LIMIT = 50
+
 print(f'Using URL: {DATABASE_URL}')
 engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
@@ -131,12 +133,14 @@ async def load_all_data(session: AsyncSession):
 
             tasks = [limited_fetch(page, BATCH_SIZE) for page in remaining_pages]
             
-            all_pages_items = await asyncio.gather(*tasks)
-
-            for items in all_pages_items:
-                if items == "Error":
-                    continue
-                await process_items(session, items)
+            for i in range(0, len(tasks), DB_BATCH_LIMIT):
+                batch = tasks[i:i + DB_BATCH_LIMIT]
+                all_pages_items = await asyncio.gather(*batch)
+    
+                for items in all_pages_items:
+                    if items == "Error":
+                        continue
+                    await process_items(session, items)
 
 
     else:
