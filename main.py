@@ -243,7 +243,7 @@ async def on_subject_select(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == 'main_menu')
 async def show_main_menu(callback: CallbackQuery, state: FSMContext):
-    await state.clear()
+    await state.set_state(None)
     regid = get_regid(callback.message.chat.id)
     username = await state.get_value("current_username")
 

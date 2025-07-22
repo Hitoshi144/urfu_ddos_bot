@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import json
+from time import sleep
 
 async def first_fetch():
     async with aiohttp.ClientSession() as session:
@@ -43,4 +44,7 @@ async def fetch_data(page: int, size: int):
 
                 return data["items"]
             else:
+                error_text = await response.text()
+                print(f"❌ Ошибка: status={status}, page={page}, size={size}")
+                print(f"Ответ сервера: {error_text}")
                 return "Error"

@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 import pandas as pd
 import os
+import asyncio
 
 from data_fetching import first_fetch, fetch_data
 
@@ -31,6 +32,11 @@ CODES = [
     '37.05.02',
     '43.03.01'
 ]
+
+BATCH_SIZE = 100
+semaphore = asyncio.Semaphore(100)
+
+db_semaphore = asyncio.Semaphore(10)
 
 print(f'Using URL: {DATABASE_URL}')
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -119,20 +125,44 @@ async def load_all_data(session: AsyncSession):
         async with SessionLocal() as session:
             await delete_all(session)
 
-            for i in range(100):
-                huesos = items[i]
+            await process_items(items)
+            
+            pages_total = (count + BATCH_SIZE - 1) // BATCH_SIZE
+            remaining_pages = range(2, pages_total + 1)
+            #page = 1
 
-                subjects = huesos["applications"]
+            tasks = [limited_fetch(page, BATCH_SIZE) for page in remaining_pages]
+            
+            all_pages_items = await asyncio.gather(*tasks)
 
+            db_tasks = [process_items(items) for items in all_pages_items if items != "Error"]
+            await asyncio.gather(*db_tasks)
+
+
+    else:
+        return "Error"
+    
+async def limited_fetch(page, size):
+    async with semaphore:
+        return await fetch_data(page, size)
+    
+async def process_items(items: list[dict]):
+    async with db_semaphore:
+        async with SessionLocal() as session:
+            for huesos in items:
+                if not isinstance(huesos, dict):
+                    print(f"⚠ Unexpected entry: {huesos}")
+                    continue
+                subjects = huesos.get("applications", [])
+            
                 for subject in subjects:
                     if subject["speciality"].split()[0] in CODES:
                         marks = subject["marks"]
-
                         str_marks = ''
-
+            
                         for key, mark in marks.items():
-                            str_marks += f'{key} {mark["mark"]}'
-
+                            str_marks += f'{key} {mark["mark"]} '
+            
                         await create(
                             session,
                             regnum=huesos["regnum"],
@@ -143,48 +173,6 @@ async def load_all_data(session: AsyncSession):
                             marks=str_marks,
                             total_mark=subject["total_mark"]
                         )
-            
-            count -= 100
-            page = 1
-            while count > 0:
-                if count < 100:
-                    items = await fetch_data(page, count)
-                    count -= count
-                else:
-                    items = await fetch_data(page, 100)
-                    count -= 100
-                page += 1
-
-                for huesos in items:
-                    if not isinstance(huesos, dict):
-                        print(f"⚠ Unexpected entry: {huesos}")
-                        continue
-
-                    subjects = huesos.get("applications", [])
-                
-                    for subject in subjects:
-                        if subject["speciality"].split()[0] in CODES:
-                            marks = subject["marks"]
-                            str_marks = ''
-                
-                            for key, mark in marks.items():
-                                str_marks += f'{key} {mark["mark"]} '
-                
-                            await create(
-                                session,
-                                regnum=huesos["regnum"],
-                                speciality=subject["speciality"],
-                                institute=subject["institute"],
-                                compensation=subject["compensation"],
-                                priority=subject["priority"],
-                                marks=str_marks,
-                                total_mark=subject["total_mark"]
-                            )
-
-
-    else:
-        return "Error"
-    
 
 async def need_db_update():
     async with SessionLocal() as session:
