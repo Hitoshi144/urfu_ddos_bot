@@ -25,6 +25,8 @@ if (TOKEN):
 else:
     print('Чёт не так пошло(')
 
+DB_UPDATING = False
+
 dp = Dispatcher()
 
 class ENTERREFID(StatesGroup):
@@ -157,14 +159,26 @@ async def action_selecting(callback: CallbackQuery, state: FSMContext):
 async def on_subject_select(callback: CallbackQuery, state: FSMContext):
     program_id = callback.data.split('_')[1] # type: ignore
 
+    global DB_UPDATING
+
     async with SessionLocal() as session:
         need_update = await need_db_update()
 
-        if need_update:
+        if need_update and not DB_UPDATING:
             async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+                DB_UPDATING = True
+
                 await init_db()
                 await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
                 await load_all_data(session)
+
+                DB_UPDATING = False
+        
+        if DB_UPDATING:
+            await callback.message.edit_text('Уже получаю актуальные данные... (･ω<)☆')
+            
+            while DB_UPDATING:
+                await asyncio.sleep(0.5)
 
         async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
             await callback.message.edit_text('Шуршу байтами... ( = ⩊ = )') # type: ignore
@@ -257,15 +271,27 @@ async def show_main_menu(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data.startswith('table_'))
 async def get_table(callback: CallbackQuery):
+     global DB_UPDATING
+
      async with SessionLocal() as session:
         need_update = await need_db_update()
 
-        if need_update:
+        if need_update and not DB_UPDATING:
             async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+                DB_UPDATING = True
+
                 await init_db()
                 await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
                 await load_all_data(session)
 
+                DB_UPDATING = False
+
+        if DB_UPDATING:
+            await callback.message.edit_text('Уже получаю актуальные данные... (･ω<)☆')
+            
+            while DB_UPDATING:
+                await asyncio.sleep(0.5)
+        
         program_id = callback.data.split('_')[1]
 
         async with ChatActionSender.upload_document(bot=callback.message.bot, chat_id=callback.message.chat.id):
@@ -295,11 +321,25 @@ async def get_table(callback: CallbackQuery):
 
 @dp.callback_query(F.data == 'update_db')
 async def update_database(callback: CallbackQuery):
+    global DB_UPDATING
+
     async with SessionLocal() as session:
-        async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
-                    await init_db()
-                    await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
-                    await load_all_data(session)
+        if not DB_UPDATING:
+            async with ChatActionSender.typing(bot=callback.message.bot, chat_id=callback.message.chat.id): # type: ignore
+                        DB_UPDATING = True
+
+                        await init_db()
+                        await callback.message.edit_text('Получаю актуальные данные... (･ω<)☆') # type: ignore
+                        await load_all_data(session)
+
+                        DB_UPDATING = False
+        
+        if DB_UPDATING:
+            await callback.message.edit_text('Уже получаю актуальные данные... (･ω<)☆')
+            
+            while DB_UPDATING:
+                await asyncio.sleep(0.5)
+                
     regid = get_regid(callback.message.chat.id)
     
     await callback.message.edit_text(f'''Ура~! База данных успешно обновлена! ✨(≧◡≦)

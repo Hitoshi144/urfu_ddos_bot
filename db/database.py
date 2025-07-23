@@ -101,7 +101,7 @@ async def get(session: AsyncSession, id: int):
             stmt = "Программа не найдена"
     
     if stmt != "Программа не найдена":
-        stmt = stmt.order_by(asc(User.priority), desc(User.total_mark))
+        stmt = stmt.where(User.compensation == "Бюджетная основа").order_by(asc(User.priority), desc(User.total_mark))
         result = await session.execute(stmt)
         return result.scalars().all()
     else:
@@ -158,7 +158,7 @@ async def process_items(session: AsyncSession, items: list[dict]):
         subjects = huesos.get("applications", [])
     
         for subject in subjects:
-            if subject["speciality"].split()[0] in CODES:
+            if (subject["speciality"].split()[0] in CODES) and (subject["edu_doc_original"] == True) and (subject["compensation"] == "Бюджетная основа"):
                 marks = subject["marks"]
                 str_marks = ''
     
