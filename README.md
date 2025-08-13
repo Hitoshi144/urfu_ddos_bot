@@ -200,3 +200,110 @@ But then, after analyzing the site's network traffic, I found a GET request that
     },
 ```
 </details>
+
+---
+
+## 🚀 Installation and launch
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Hitoshi144/urfu_ddos_bot.git
+cd urfu_ddos_bot
+```
+
+---
+
+### 2. Create a virtual environment
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+**Linux / macOS (Bash/Zsh):**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+---
+
+### 3. Set dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Install [Docker](https://www.docker.com/)
+
+---
+
+### 5. Create a PostgreSQL database in Docker
+
+```bash
+docker run --name my-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=mydb -p 5432:5432 -d postgres
+```
+
+---
+
+### 6. Create a Telegram bot
+
+1. Write to [@BotFather](https://t.me/BotFather)
+2. Use the command `/newbot` and follow the instructions
+3. Copy the **token** for connection
+
+---
+
+### 7. Create a `.env` file in the project folder
+
+```
+TOKEN="your_bot_token"
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mydb
+DB_USER=postgres
+DB_PASSWORD=postgres
+```
+> You can use your settings to create a database in Docker and for .env.
+
+---
+
+### 8. Start PostgreSQL (if not already running)
+
+```bash
+docker start my-postgres
+```
+
+---
+
+### 9. Launch the bot
+
+**Windows:**
+
+```powershell
+python main.py
+```
+
+**Linux / macOS:**
+
+```bash
+python3 main.py
+```
+
+---
+
+## 🎉 That's it! 
+
+The project is complete and **may not work** at certain times, for example, when there is no student recruitment, as its functionality depends entirely on the university's backend.
+
+---
+
+## License
+
+Distributed under the **MIT** License. See [LICENSE](https://github.com/Hitoshi144/urfu_ddos_bot/blob/master/LICENSE) for more information.
