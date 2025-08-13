@@ -201,6 +201,8 @@ But then, after analyzing the site's network traffic, I found a GET request that
 ```
 </details>
 
+> You can check [video](https://youtu.be/fwm7STLAsew) where the project is demonstrated
+
 ---
 
 ## 🚀 Installation and launch
